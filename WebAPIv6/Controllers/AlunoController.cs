@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using WebAPIv6.Models;
+using WebAPIv6.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace WebAPIv6.Controllers
 {
@@ -7,48 +9,32 @@ namespace WebAPIv6.Controllers
     [Route("api/[controller]")]
     public class AlunoController : ControllerBase
     {
-        public List<Aluno> Alunos = new List<Aluno>(){
-            new Aluno(){
-                Id = 1,
-                Nome="Marcos",
-                Sobrenome="Almeida",
-                Telefone="1111"
-            },
-            new Aluno(){
-                Id = 2,
-                Nome="Marta",
-                Sobrenome="Kent",
-                Telefone="2222"
-            },
-            new Aluno(){
-                Id = 3,
-                Nome="Laura",
-                Sobrenome="Maria",
-                Telefone="3333"
-            },
-        };
-        public AlunoController() { }
+        private readonly SmartContext _context;
+
+        public AlunoController(SmartContext context)
+        {
+            _context = context;
+        }
 
         [HttpGet]
         public IActionResult Get()
         {
-            return Ok(Alunos);
+            return Ok(_context.Alunos);
         }
 
         [HttpGet("byId/{id}")]
         public IActionResult GetById(int id)
         {
-            var aluno = Alunos.FirstOrDefault(a => a.Id == id);
+            var aluno = _context.Alunos!.FirstOrDefault(a => a.Id == id);
             if (aluno == null) return BadRequest("O aluno não foi encontrado");
             return Ok(aluno);
         }
 
-
         [HttpGet("ByName")]
         public IActionResult GetByName(string nome, string Sobrenome)
         {
-            var aluno = Alunos.FirstOrDefault(a =>
-                a.Nome!.Contains(nome, StringComparison.CurrentCultureIgnoreCase) && a.Sobrenome!.Contains(Sobrenome, StringComparison.CurrentCultureIgnoreCase)
+            var aluno = _context.Alunos!.FirstOrDefault(a =>
+                a.Nome!.ToUpper().Contains(nome.ToUpper()) && a.Sobrenome!.ToUpper().Contains(Sobrenome.ToUpper())
             );
             if (aluno == null) return BadRequest("O aluno não foi encontrado");
             return Ok(aluno);
@@ -57,24 +43,38 @@ namespace WebAPIv6.Controllers
         [HttpPost]
         public IActionResult Post(Aluno aluno)
         {
+            _context.Add(aluno);
+            _context.SaveChanges();
             return Ok(aluno);
         }
 
         [HttpPut("{id}")]
         public IActionResult Put(int id, Aluno aluno)
         {
+            var alu = _context.Alunos!.AsNoTracking().FirstOrDefault(a => a.Id == id);
+            if (aluno == null) return BadRequest("O aluno não foi encontrado");
+            _context.Update(aluno);
+            _context.SaveChanges();
             return Ok(aluno);
         }
 
         [HttpPatch("{id}")]
         public IActionResult Patch(int id, Aluno aluno)
         {
+            var alu = _context.Alunos!.AsNoTracking().FirstOrDefault(a => a.Id == id);
+            if (aluno == null) return BadRequest("O aluno não foi encontrado");
+            _context.Update(aluno);
+            _context.SaveChanges();
             return Ok(aluno);
         }
 
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
+            var aluno = _context.Alunos!.FirstOrDefault(a => a.Id == id);
+            if (aluno == null) return BadRequest("O aluno não foi encontrado");
+            _context.Remove(aluno);
+            _context.SaveChanges();
             return Ok();
         }
 
